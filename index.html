@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <title>Embed Google Apps Script</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    /* รีเซ็ตพื้นฐาน ลดปัญหา spacing/scroll ไม่พึงประสงค์ */
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    /* ให้ทุกอย่างคำนวณขนาดแบบ border-box */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    /* โหมดเต็มจอ: container กินเต็ม viewport */
+    .iframe-fullscreen {
+      position: fixed;   /* ใช้ fixed เพื่อครอบเต็ม viewport เสมอ */
+      inset: 0;          /* เทียบเท่า top:0; right:0; bottom:0; left:0; */
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;  /* กัน scroll ซ้อน */
+      background: #000;  /* สีพื้นหลังกรณีโหลดช้า/ขอบว่าง */
+    }
+
+    .iframe-fullscreen iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;    /* กันช่องว่าง inline */
+    }
+
+    /* กรณี GitHub Pages บางธีมมี global style แทรก ให้กันไว้ */
+    iframe {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="iframe-fullscreen">
+    <iframe
+      src="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec"
+      title="Embedded App"
+      allow="clipboard-write; fullscreen"
+      referrerpolicy="no-referrer"
+      loading="lazy">
+    </iframe>
+  </div>
+</body>
+</html>
