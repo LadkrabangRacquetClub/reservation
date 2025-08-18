@@ -3,124 +3,52 @@
 <head>
   <meta charset="utf-8" />
   <title>จองสนาม</title>
-  <!-- ใช้ viewport เดียวกับ Google Apps Script -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    /* ลบ default styles ทั้งหมด */
-    html {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      outline: 0;
-      font-size: 100%;
-      vertical-align: baseline;
-      background: transparent;
-    }
-    
-    body {
-      margin: 0;
-      padding: 0;
-      border: 0;
-      outline: 0;
-      font-size: 100%;
-      vertical-align: baseline;
-      background: transparent;
-      line-height: 1;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-    }
-    
-    /* Iframe แบบ seamless */
-    #seamless-iframe {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-      margin: 0;
-      padding: 0;
-      outline: none;
-      background: white;
-      display: block;
-      /* ไม่มี transform, scale, หรือ zoom ใดๆ */
-    }
-    
-    /* Loading แบบเรียบง่าย */
-    #loading {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 9999;
-      color: #666;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      font-size: 14px;
-      text-align: center;
-    }
-    
-    #loading.hidden {
-      display: none;
-    }
-    
-    .loading-spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #4CAF50;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html,body { width:100%; height:100%; overflow:hidden; }
+    iframe { width:100%; height:100%; border:0; display:block; }
   </style>
 </head>
 <body>
-  <!-- Loading indicator -->
-  <div id="loading">
-    <div class="loading-spinner"></div>
-    กำลังโหลด...
-  </div>
-  
-  <!-- Seamless iframe -->
   <iframe 
-    id="seamless-iframe"
-    src="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec"
-    title="จองสนาม"
+    src="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec?embedded=true&source=github"
+    seamless="seamless"
+    allowtransparency="true"
     frameborder="0"
-    scrolling="auto"
-    allowfullscreen="true"
-    allow="clipboard-write; fullscreen; geolocation; microphone; camera"
-    referrerpolicy="no-referrer-when-downgrade"
-    onload="hideLoading()"
-    onerror="showError()">
+    scrolling="yes"
+    allowfullscreen>
   </iframe>
 
   <script>
-    function hideLoading() {
-      setTimeout(() => {
-        document.getElementById('loading').classList.add('hidden');
-      }, 1000);
-    }
+    // รับ message จาก iframe เพื่อปรับแต่ง
+    window.addEventListener('message', function(event) {
+      if (event.origin !== 'https://script.google.com') return;
+      
+      // จัดการ message จาก Google Apps Script
+      if (event.data.type === 'resize') {
+        const iframe = document.querySelector('iframe');
+        if (event.data.height) {
+          iframe.style.height = event.data.height + 'px';
+        }
+      }
+    });
     
-    function showError() {
-      const loading = document.getElementById('loading');
-      loading.innerHTML = `
-        <div style="text-align: center;">
-          <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
-          <div style="margin-bottom: 10px;">ไม่สามารถโหลดได้</div>
-          <button onclick="location.reload()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px;">ลองใหม่</button>
-        </div>
-      `;
-    }
+    // ส่ง message ไปยัง iframe
+    window.addEventListener('load', function() {
+      const iframe = document.querySelector('iframe');
+      iframe.addEventListener('load', function() {
+        // แจ้ง Google Apps Script ว่ากำลังรันใน embedded mode
+        iframe.contentWindow.postMessage({
+          type: 'embedded',
+          source: 'github-pages',
+          viewport: {
+            width: window.innerWidth,
+            height: window.innerHeight
+          }
+        }, 'https://script.google.com');
+      });
+    });
   </script>
 </body>
 </html>
