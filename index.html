@@ -2,11 +2,12 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <title>จองสนาม - Mobile</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>จองสนาม</title>
+  <!-- ปรับ viewport ให้ตรงกับ Google Apps Script -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#4CAF50" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="theme-color" content="#ffffff" />
   
   <style>
     /* รีเซ็ตทุกอย่าง */
@@ -17,68 +18,70 @@
     }
     
     html, body {
+      width: 100%;
       height: 100%;
       overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: #f8f9fa;
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      font-size: 14px; /* ลดขนาดฟอนต์ base */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff;
+      /* ไม่ใช้ font-size เพื่อให้ใช้ค่าเดิมจาก iframe */
     }
     
-    /* Container เต็มจอไม่มี header */
-    .mobile-container {
+    /* Container เต็มจอ 1:1 ratio */
+    .iframe-container {
       position: fixed;
       top: 0;
       left: 0;
       width: 100vw;
       height: 100vh;
-      height: 100dvh; /* สำหรับมือถือใหม่ */
+      /* ใช้ 100dvh สำหรับมือถือใหม่ที่รองรับ */
+      height: 100dvh;
       background: white;
       overflow: hidden;
     }
     
-    /* iframe เต็มพื้นที่ */
-    .iframe-wrapper {
+    /* iframe แบบไม่เปลี่ยนสัดส่วน */
+    .iframe-container iframe {
       width: 100%;
       height: 100%;
-      position: relative;
-    }
-    
-    .iframe-wrapper iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
+      border: 0;
       display: block;
-      background: white;
-      /* บังคับให้ใช้ขนาดเล็ก */
-      transform: scale(0.75);
-      transform-origin: 0 0;
-      width: 117.6%; /* 100% / 0.85 */
-      height: 117.6%; /* 100% / 0.85 */
+      /* ไม่ใช้ transform, scale, zoom ใดๆ */
+      /* ให้ใช้ขนาดจริงเหมือน Google Apps Script */
     }
     
-    /* Loading แบบเล็ก */
-    .loading {
+    /* Loading indicator */
+    .loading-overlay {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #666;
-      font-size: 12px;
-      z-index: 10;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      transition: opacity 0.3s ease;
+    }
+    
+    .loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .loading-content {
       text-align: center;
+      color: #666;
     }
     
     .spinner {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #4CAF50;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #4CAF50;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 8px;
+      margin: 0 auto 12px;
     }
     
     @keyframes spin {
@@ -86,113 +89,150 @@
       100% { transform: rotate(360deg); }
     }
     
-    /* ปรับ safe area สำหรับ iPhone */
+    .loading-text {
+      font-size: 16px;
+      font-weight: 400;
+    }
+    
+    /* Error state */
+    .error-content {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+    }
+    
+    .error-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    .error-message {
+      font-size: 16px;
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+    
+    .retry-button {
+      padding: 12px 24px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .retry-button:hover {
+      background: #45a049;
+    }
+    
+    .retry-button:active {
+      transform: translateY(1px);
+    }
+    
+    /* ปรับแต่งสำหรับ iPhone safe area */
     @supports(padding: max(0px)) {
-      .mobile-container {
-        padding-top: env(safe-area-inset-top);
+      .iframe-container {
+        /* ไม่ใช้ safe area padding เพื่อให้เต็มจอเหมือน Google Apps Script */
+        /* หากต้องการ safe area ให้เอา comment ออก */
+        /* padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right);
+        padding-right: env(safe-area-inset-right); */
       }
     }
     
-    /* ปรับแต่งสำหรับหน้าจอเล็กมาก */
-    @media (max-width: 360px) {
-      .iframe-wrapper iframe {
-        transform: scale(0.7);
-        width: 125%; /* 100% / 0.8 */
-        height: 125%; /* 100% / 0.8 */
-      }
+    /* ป้องกัน scroll bounce บน iOS */
+    body {
+      position: fixed;
+      overflow: hidden;
+      -webkit-overflow-scrolling: touch;
     }
     
-    /* ปรับแต่งสำหรับหน้าจอใหญ่ */
-    @media (min-width: 400px) {
-      .iframe-wrapper iframe {
-        transform: scale(0.7);
-        width: 111.1%; /* 100% / 0.9 */
-        height: 111.1%; /* 100% / 0.9 */
-      }
+    /* ป้องกัน text selection และ callout */
+    iframe {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
     
-    /* ปรับแต่งสำหรับแนวนอน */
-    @media (orientation: landscape) {
-      .iframe-wrapper iframe {
-        transform: scale(0.7);
-        width: 133.3%; /* 100% / 0.75 */
-        height: 133.3%; /* 100% / 0.75 */
-      }
-    }
-    
-    /* ปรับแต่งสำหรับหน้าจอสูง */
-    @media (min-height: 800px) {
-      .iframe-wrapper iframe {
-        transform: scale(0.9);
-        width: 111.1%;
-        height: 111.1%;
-      }
-    }
+    /* ไม่มี media query เพื่อปรับขนาด */
+    /* ให้ใช้สัดส่วนเดิมทุกหน้าจอ */
   </style>
 </head>
 <body>
-  <div class="mobile-container">
-    <div class="iframe-wrapper">
-      <div class="loading" id="loading">
+  <div class="iframe-container">
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-content">
         <div class="spinner"></div>
-        โหลด...
+        <div class="loading-text">กำลังโหลด...</div>
       </div>
-      
-      <iframe
-        id="mainFrame"
-        src="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec"
-        title="จองสนาม"
-        allow="clipboard-write; fullscreen"
-        referrerpolicy="no-referrer"
-        onload="hideLoading()"
-        onerror="showError()">
-      </iframe>
     </div>
+    
+    <!-- Main iframe -->
+    <iframe
+      id="mainIframe"
+      src="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec"
+      title="ระบบจองสนาม Ladkrabang Racquet Club"
+      allow="clipboard-write; fullscreen; geolocation"
+      referrerpolicy="no-referrer"
+      onload="handleIframeLoad()"
+      onerror="handleIframeError()">
+    </iframe>
   </div>
 
   <script>
-    function hideLoading() {
-      const loading = document.getElementById('loading');
-      if (loading) {
-        loading.style.display = 'none';
-      }
+    // หน่วงเวลาซ่อน loading
+    function handleIframeLoad() {
+      setTimeout(() => {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+          loadingOverlay.classList.add('hidden');
+          setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+          }, 300);
+        }
+      }, 500); // หน่วงเวลาให้ iframe โหลดเสร็จสมบูรณ์
     }
     
-    function showError() {
-      const loading = document.getElementById('loading');
-      if (loading) {
-        loading.innerHTML = `
-          <div style="text-align: center;">
-            <div style="font-size: 18px; margin-bottom: 8px;">❌</div>
-            <div style="font-size: 12px; margin-bottom: 8px;">โหลดไม่ได้</div>
-            <button onclick="location.reload()" style="padding: 6px 12px; background: #4CAF50; color: white; border: none; border-radius: 4px; font-size: 12px;">ลองใหม่</button>
+    // จัดการ error
+    function handleIframeError() {
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      if (loadingOverlay) {
+        loadingOverlay.innerHTML = `
+          <div class="error-content">
+            <div class="error-icon">⚠️</div>
+            <div class="error-message">
+              ไม่สามารถโหลดระบบจองสนามได้<br>
+              กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต
+            </div>
+            <button class="retry-button" onclick="retryLoad()">
+              ลองใหม่อีกครั้ง
+            </button>
           </div>
         `;
       }
     }
     
-    // จัดการการเปลี่ยนแนวหน้าจอ
-    window.addEventListener('orientationchange', function() {
-      setTimeout(function() {
-        const iframe = document.getElementById('mainFrame');
-        if (iframe) {
-          iframe.style.height = '0px';
-          iframe.offsetHeight;
-          iframe.style.height = '117.6%';
-        }
-      }, 100);
-    });
+    // ลองโหลดใหม่
+    function retryLoad() {
+      location.reload();
+    }
     
-    // ป้องกัน zoom
+    // ป้องกัน pinch zoom
     document.addEventListener('touchstart', function (event) {
       if (event.touches.length > 1) {
         event.preventDefault();
       }
     }, { passive: false });
     
+    // ป้องกัน double tap zoom
     let lastTouchEnd = 0;
     document.addEventListener('touchend', function (event) {
       const now = (new Date()).getTime();
@@ -202,47 +242,53 @@
       lastTouchEnd = now;
     }, false);
     
-    // ซ่อน address bar
+    // ป้องกัน context menu
+    document.addEventListener('contextmenu', function(event) {
+      event.preventDefault();
+    }, false);
+    
+    // ซ่อน address bar บน mobile browser
     window.addEventListener('load', function() {
+      // หน่วงเวลาเพื่อให้หน้าเพจโหลดเสร็จ
       setTimeout(function() {
-        window.scrollTo(0, 1);
-      }, 0);
+        if (window.navigator.standalone !== true) {
+          window.scrollTo(0, 1);
+        }
+      }, 1000);
     });
     
-    // ปรับขนาดตามหน้าจอ
-    function adjustScale() {
-      const iframe = document.getElementById('mainFrame');
-      if (!iframe) return;
-      
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      
-      let scale = 0.85; // default
-      
-      if (width < 360) {
-        scale = 0.75;
-      } else if (width < 400) {
-        scale = 0.8;
-      } else if (width >= 400) {
-        scale = 0.9;
-      }
-      
-      // ปรับตามแนวหน้าจอ
-      if (window.orientation === 90 || window.orientation === -90) {
-        scale = scale * 0.85; // ลดลงอีกในแนวนอน
-      }
-      
-      iframe.style.transform = `scale(${scale})`;
-      iframe.style.width = `${100 / scale}%`;
-      iframe.style.height = `${100 / scale}%`;
-    }
-    
-    // เรียกใช้เมื่อโหลดและเปลี่ยนขนาด
-    window.addEventListener('load', adjustScale);
-    window.addEventListener('resize', adjustScale);
+    // จัดการการเปลี่ยนแนวหน้าจอ
     window.addEventListener('orientationchange', function() {
-      setTimeout(adjustScale, 100);
+      setTimeout(function() {
+        // บังคับให้ iframe refresh layout
+        const iframe = document.getElementById('mainIframe');
+        if (iframe) {
+          iframe.style.display = 'none';
+          iframe.offsetHeight; // Trigger reflow
+          iframe.style.display = 'block';
+        }
+        
+        // ซ่อน address bar อีกครั้ง
+        if (window.navigator.standalone !== true) {
+          window.scrollTo(0, 1);
+        }
+      }, 100);
     });
+    
+    // Auto-reload หากค้าง loading นานเกิน 30 วินาที
+    setTimeout(() => {
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
+        console.warn('Page loading timeout, attempting reload...');
+        handleIframeError();
+      }
+    }, 30000);
+    
+    // Debug information
+    console.log('📱 Mobile iframe wrapper initialized');
+    console.log('🔧 Viewport:', window.innerWidth + 'x' + window.innerHeight);
+    console.log('📏 Device pixel ratio:', window.devicePixelRatio);
+    console.log('🔄 User agent:', navigator.userAgent);
   </script>
 </body>
 </html>
