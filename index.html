@@ -2,118 +2,125 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <title>กำลังโหลด...</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>จองสนาม</title>
+  <!-- ใช้ viewport เดียวกับ Google Apps Script -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   
   <style>
+    /* ลบ default styles ทั้งหมด */
+    html {
+      margin: 0;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      font-size: 100%;
+      vertical-align: baseline;
+      background: transparent;
+    }
+    
     body {
       margin: 0;
-      padding: 20px;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      font-size: 100%;
+      vertical-align: baseline;
+      background: transparent;
+      line-height: 1;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    /* Iframe แบบ seamless */
+    #seamless-iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      margin: 0;
+      padding: 0;
+      outline: none;
+      background: white;
+      display: block;
+      /* ไม่มี transform, scale, หรือ zoom ใดๆ */
+    }
+    
+    /* Loading แบบเรียบง่าย */
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 9999;
+      color: #666;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      font-size: 14px;
       text-align: center;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
     }
     
-    .logo {
-      font-size: 4em;
-      margin-bottom: 20px;
+    #loading.hidden {
+      display: none;
     }
     
-    .title {
-      font-size: 1.5em;
-      margin-bottom: 10px;
-      font-weight: 600;
-    }
-    
-    .subtitle {
-      font-size: 1em;
-      margin-bottom: 30px;
-      opacity: 0.8;
-    }
-    
-    .loading {
-      margin: 20px 0;
-    }
-    
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top: 4px solid white;
+    .loading-spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #4CAF50;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 15px;
+      margin: 0 auto 10px;
     }
     
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    
-    .manual-link {
-      margin-top: 20px;
-    }
-    
-    .manual-link a {
-      color: white;
-      text-decoration: none;
-      padding: 12px 24px;
-      border: 2px solid white;
-      border-radius: 25px;
-      display: inline-block;
-      transition: all 0.3s ease;
-    }
-    
-    .manual-link a:hover {
-      background: white;
-      color: #667eea;
-    }
   </style>
 </head>
 <body>
-  <div class="logo">🏓</div>
-  <div class="title">Ladkrabang Racquet Club</div>
-  <div class="subtitle">ระบบจองสนาม</div>
-  
-  <div class="loading">
-    <div class="spinner"></div>
-    <div>กำลังเปลี่ยนเส้นทาง...</div>
+  <!-- Loading indicator -->
+  <div id="loading">
+    <div class="loading-spinner"></div>
+    กำลังโหลด...
   </div>
   
-  <div class="manual-link">
-    <a href="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec" id="manual-link">
-      คลิกที่นี่หากไม่เปลี่ยนเส้นทางอัตโนมัติ
-    </a>
-  </div>
+  <!-- Seamless iframe -->
+  <iframe 
+    id="seamless-iframe"
+    src="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec"
+    title="จองสนาม"
+    frameborder="0"
+    scrolling="auto"
+    allowfullscreen="true"
+    allow="clipboard-write; fullscreen; geolocation; microphone; camera"
+    referrerpolicy="no-referrer-when-downgrade"
+    onload="hideLoading()"
+    onerror="showError()">
+  </iframe>
 
   <script>
-    // Auto redirect ไปยัง Google Apps Script โดยตรง
-    const targetUrl = "https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec";
+    function hideLoading() {
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+      }, 1000);
+    }
     
-    // หน่วงเวลาเล็กน้อยแล้ว redirect
-    setTimeout(() => {
-      window.location.replace(targetUrl);
-    }, 2000);
-    
-    // Fallback: redirect ทันทีเมื่อคลิก
-    document.getElementById('manual-link').addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.replace(targetUrl);
-    });
-    
-    // เพิ่ม meta refresh เป็น backup
-    setTimeout(() => {
-      const meta = document.createElement('meta');
-      meta.httpEquiv = 'refresh';
-      meta.content = '3;url=' + targetUrl;
-      document.head.appendChild(meta);
-    }, 1000);
+    function showError() {
+      const loading = document.getElementById('loading');
+      loading.innerHTML = `
+        <div style="text-align: center;">
+          <div style="font-size: 24px; margin-bottom: 10px;">❌</div>
+          <div style="margin-bottom: 10px;">ไม่สามารถโหลดได้</div>
+          <button onclick="location.reload()" style="padding: 8px 16px; background: #4CAF50; color: white; border: none; border-radius: 4px;">ลองใหม่</button>
+        </div>
+      `;
+    }
   </script>
 </body>
 </html>
