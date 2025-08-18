@@ -2,86 +2,53 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-  <title>จองสนาม</title>
-  <!-- ปรับ viewport ให้ตรงกับ Google Apps Script -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="theme-color" content="#ffffff" />
+  <title>กำลังโหลด...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <style>
-    /* รีเซ็ตทุกอย่าง */
-    * {
+    body {
       margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: #ffffff;
-      /* ไม่ใช้ font-size เพื่อให้ใช้ค่าเดิมจาก iframe */
-    }
-    
-    /* Container เต็มจอ 1:1 ratio */
-    .iframe-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      /* ใช้ 100dvh สำหรับมือถือใหม่ที่รองรับ */
-      height: 100dvh;
-      background: white;
-      overflow: hidden;
-    }
-    
-    /* iframe แบบไม่เปลี่ยนสัดส่วน */
-    .iframe-container iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      display: block;
-      /* ไม่ใช้ transform, scale, zoom ใดๆ */
-      /* ให้ใช้ขนาดจริงเหมือน Google Apps Script */
-    }
-    
-    /* Loading indicator */
-    .loading-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.95);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      transition: opacity 0.3s ease;
-    }
-    
-    .loading-overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-    
-    .loading-content {
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
       text-align: center;
-      color: #666;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .logo {
+      font-size: 4em;
+      margin-bottom: 20px;
+    }
+    
+    .title {
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    
+    .subtitle {
+      font-size: 1em;
+      margin-bottom: 30px;
+      opacity: 0.8;
+    }
+    
+    .loading {
+      margin: 20px 0;
     }
     
     .spinner {
-      width: 32px;
-      height: 32px;
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #4CAF50;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top: 4px solid white;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
+      margin: 0 auto 15px;
     }
     
     @keyframes spin {
@@ -89,206 +56,64 @@
       100% { transform: rotate(360deg); }
     }
     
-    .loading-text {
-      font-size: 16px;
-      font-weight: 400;
+    .manual-link {
+      margin-top: 20px;
     }
     
-    /* Error state */
-    .error-content {
-      text-align: center;
-      padding: 20px;
-      color: #666;
-    }
-    
-    .error-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    
-    .error-message {
-      font-size: 16px;
-      margin-bottom: 20px;
-      line-height: 1.4;
-    }
-    
-    .retry-button {
-      padding: 12px 24px;
-      background: #4CAF50;
+    .manual-link a {
       color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.2s;
+      text-decoration: none;
+      padding: 12px 24px;
+      border: 2px solid white;
+      border-radius: 25px;
+      display: inline-block;
+      transition: all 0.3s ease;
     }
     
-    .retry-button:hover {
-      background: #45a049;
+    .manual-link a:hover {
+      background: white;
+      color: #667eea;
     }
-    
-    .retry-button:active {
-      transform: translateY(1px);
-    }
-    
-    /* ปรับแต่งสำหรับ iPhone safe area */
-    @supports(padding: max(0px)) {
-      .iframe-container {
-        /* ไม่ใช้ safe area padding เพื่อให้เต็มจอเหมือน Google Apps Script */
-        /* หากต้องการ safe area ให้เอา comment ออก */
-        /* padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        padding-left: env(safe-area-inset-left);
-        padding-right: env(safe-area-inset-right); */
-      }
-    }
-    
-    /* ป้องกัน scroll bounce บน iOS */
-    body {
-      position: fixed;
-      overflow: hidden;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    /* ป้องกัน text selection และ callout */
-    iframe {
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    /* ไม่มี media query เพื่อปรับขนาด */
-    /* ให้ใช้สัดส่วนเดิมทุกหน้าจอ */
   </style>
 </head>
 <body>
-  <div class="iframe-container">
-    <!-- Loading overlay -->
-    <div class="loading-overlay" id="loadingOverlay">
-      <div class="loading-content">
-        <div class="spinner"></div>
-        <div class="loading-text">กำลังโหลด...</div>
-      </div>
-    </div>
-    
-    <!-- Main iframe -->
-    <iframe
-      id="mainIframe"
-      src="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec"
-      title="ระบบจองสนาม Ladkrabang Racquet Club"
-      allow="clipboard-write; fullscreen; geolocation"
-      referrerpolicy="no-referrer"
-      onload="handleIframeLoad()"
-      onerror="handleIframeError()">
-    </iframe>
+  <div class="logo">🏓</div>
+  <div class="title">Ladkrabang Racquet Club</div>
+  <div class="subtitle">ระบบจองสนาม</div>
+  
+  <div class="loading">
+    <div class="spinner"></div>
+    <div>กำลังเปลี่ยนเส้นทาง...</div>
+  </div>
+  
+  <div class="manual-link">
+    <a href="https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec" id="manual-link">
+      คลิกที่นี่หากไม่เปลี่ยนเส้นทางอัตโนมัติ
+    </a>
   </div>
 
   <script>
-    // หน่วงเวลาซ่อน loading
-    function handleIframeLoad() {
-      setTimeout(() => {
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        if (loadingOverlay) {
-          loadingOverlay.classList.add('hidden');
-          setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-          }, 300);
-        }
-      }, 500); // หน่วงเวลาให้ iframe โหลดเสร็จสมบูรณ์
-    }
+    // Auto redirect ไปยัง Google Apps Script โดยตรง
+    const targetUrl = "https://script.google.com/macros/s/AKfycbxETsJxIbaYYlilT33fKX9egNaigbe82QgziXgvf73mRIGGRPopszeA8v9CgbF4lRNcgw/exec";
     
-    // จัดการ error
-    function handleIframeError() {
-      const loadingOverlay = document.getElementById('loadingOverlay');
-      if (loadingOverlay) {
-        loadingOverlay.innerHTML = `
-          <div class="error-content">
-            <div class="error-icon">⚠️</div>
-            <div class="error-message">
-              ไม่สามารถโหลดระบบจองสนามได้<br>
-              กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต
-            </div>
-            <button class="retry-button" onclick="retryLoad()">
-              ลองใหม่อีกครั้ง
-            </button>
-          </div>
-        `;
-      }
-    }
-    
-    // ลองโหลดใหม่
-    function retryLoad() {
-      location.reload();
-    }
-    
-    // ป้องกัน pinch zoom
-    document.addEventListener('touchstart', function (event) {
-      if (event.touches.length > 1) {
-        event.preventDefault();
-      }
-    }, { passive: false });
-    
-    // ป้องกัน double tap zoom
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function (event) {
-      const now = (new Date()).getTime();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
-      }
-      lastTouchEnd = now;
-    }, false);
-    
-    // ป้องกัน context menu
-    document.addEventListener('contextmenu', function(event) {
-      event.preventDefault();
-    }, false);
-    
-    // ซ่อน address bar บน mobile browser
-    window.addEventListener('load', function() {
-      // หน่วงเวลาเพื่อให้หน้าเพจโหลดเสร็จ
-      setTimeout(function() {
-        if (window.navigator.standalone !== true) {
-          window.scrollTo(0, 1);
-        }
-      }, 1000);
-    });
-    
-    // จัดการการเปลี่ยนแนวหน้าจอ
-    window.addEventListener('orientationchange', function() {
-      setTimeout(function() {
-        // บังคับให้ iframe refresh layout
-        const iframe = document.getElementById('mainIframe');
-        if (iframe) {
-          iframe.style.display = 'none';
-          iframe.offsetHeight; // Trigger reflow
-          iframe.style.display = 'block';
-        }
-        
-        // ซ่อน address bar อีกครั้ง
-        if (window.navigator.standalone !== true) {
-          window.scrollTo(0, 1);
-        }
-      }, 100);
-    });
-    
-    // Auto-reload หากค้าง loading นานเกิน 30 วินาที
+    // หน่วงเวลาเล็กน้อยแล้ว redirect
     setTimeout(() => {
-      const loadingOverlay = document.getElementById('loadingOverlay');
-      if (loadingOverlay && !loadingOverlay.classList.contains('hidden')) {
-        console.warn('Page loading timeout, attempting reload...');
-        handleIframeError();
-      }
-    }, 30000);
+      window.location.replace(targetUrl);
+    }, 2000);
     
-    // Debug information
-    console.log('📱 Mobile iframe wrapper initialized');
-    console.log('🔧 Viewport:', window.innerWidth + 'x' + window.innerHeight);
-    console.log('📏 Device pixel ratio:', window.devicePixelRatio);
-    console.log('🔄 User agent:', navigator.userAgent);
+    // Fallback: redirect ทันทีเมื่อคลิก
+    document.getElementById('manual-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.replace(targetUrl);
+    });
+    
+    // เพิ่ม meta refresh เป็น backup
+    setTimeout(() => {
+      const meta = document.createElement('meta');
+      meta.httpEquiv = 'refresh';
+      meta.content = '3;url=' + targetUrl;
+      document.head.appendChild(meta);
+    }, 1000);
   </script>
 </body>
 </html>
