@@ -20,26 +20,32 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            font-family: 'Kanit', Arial, sans-serif;
         }
         
         .iframe-container {
-            width: 50vw;
-            height: 50vh;
-            min-width: 400px;
-            min-height: 600px;
+            width: 90vw;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 800px;
+            min-width: 320px;
+            min-height: 400px;
             border: 2px solid #ddd;
             border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
             background: #fff;
             overflow: hidden;
+            position: relative;
         }
         
         .iframe-container iframe {
-            width: 100%;
-            height: 100%;
+            width: 200%;  /* ทำให้ iframe ใหญ่ขึ้น 2 เท่า */
+            height: 200%; /* ทำให้ iframe ใหญ่ขึ้น 2 เท่า */
             border: none;
             display: block;
             border-radius: 10px;
+            transform: scale(0.5); /* ย่อลง 50% */
+            transform-origin: 0 0; /* เริ่มย่อจากมุมซ้ายบน */
         }
         
         /* Loading indicator */
@@ -75,54 +81,81 @@
         /* Responsive adjustments */
         @media screen and (max-width: 1024px) {
             .iframe-container {
-                width: 70vw;
-                height: 60vh;
-                min-width: 350px;
-                min-height: 500px;
+                width: 95vw;
+                height: 85vh;
+            }
+            
+            .iframe-container iframe {
+                transform: scale(0.6); /* ย่อน้อยกว่าใน tablet */
+                width: 167%; /* 100/0.6 ≈ 167% */
+                height: 167%;
             }
         }
         
         @media screen and (max-width: 768px) {
             .iframe-container {
-                width: 90vw;
-                height: 70vh;
-                min-width: 320px;
-                min-height: 480px;
-                margin: 20px;
+                width: 98vw;
+                height: 90vh;
+                margin: 10px;
+            }
+            
+            .iframe-container iframe {
+                transform: scale(0.8); /* ย่อน้อยสุดใน mobile */
+                width: 125%; /* 100/0.8 = 125% */
+                height: 125%;
             }
         }
         
         @media screen and (max-width: 480px) {
             .iframe-container {
-                width: 95vw;
-                height: 80vh;
-                min-width: 300px;
-                min-height: 450px;
-                margin: 10px;
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+            }
+            
+            .iframe-container iframe {
+                transform: scale(1); /* ไม่ย่อใน mobile เล็ก */
+                width: 100%;
+                height: 100%;
             }
         }
         
-        /* Header info */
+        /* Header info - ย่อขนาด */
         .header-info {
             position: absolute;
-            top: 20px;
+            top: 15px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255,255,255,0.9);
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-family: 'Kanit', Arial, sans-serif;
-            font-size: 14px;
-            color: #666;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        /* Scale info indicator */
+        .scale-info {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 10px;
             z-index: 100;
         }
     </style>
 </head>
 <body>
-    <!-- Header info -->
+    <!-- Header info - ทำให้เล็กลง -->
     <div class="header-info">
-        🎾 ระบบจองสนามกีฬา
+        🎾 ระบบจองสนาม
     </div>
     
     <!-- Loading indicator -->
@@ -131,7 +164,7 @@
         <div>กำลังโหลดระบบจอง...</div>
     </div>
     
-    <!-- Main iframe container - 50% size -->
+    <!-- Main iframe container -->
     <div class="iframe-container">
         <iframe 
             id="mainFrame"
@@ -139,6 +172,11 @@
             onload="hideLoading()"
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation">
         </iframe>
+        
+        <!-- Scale indicator -->
+        <div class="scale-info" id="scaleInfo">
+            Scale: 50%
+        </div>
     </div>
 
     <script>
@@ -152,6 +190,22 @@
             }
         }
         
+        // อัปเดต scale indicator
+        function updateScaleInfo() {
+            const scaleInfo = document.getElementById('scaleInfo');
+            const width = window.innerWidth;
+            
+            if (width <= 480) {
+                scaleInfo.textContent = 'Scale: 100%';
+            } else if (width <= 768) {
+                scaleInfo.textContent = 'Scale: 80%';
+            } else if (width <= 1024) {
+                scaleInfo.textContent = 'Scale: 60%';
+            } else {
+                scaleInfo.textContent = 'Scale: 50%';
+            }
+        }
+        
         // เพิ่มเอฟเฟกต์เมื่อโหลดเสร็จ
         window.addEventListener('load', () => {
             const container = document.querySelector('.iframe-container');
@@ -162,8 +216,12 @@
             setTimeout(() => {
                 container.style.opacity = '1';
                 container.style.transform = 'scale(1)';
+                updateScaleInfo();
             }, 100);
         });
+        
+        // อัปเดต scale เมื่อ resize
+        window.addEventListener('resize', updateScaleInfo);
         
         // ป้องกันการ zoom
         document.addEventListener('touchstart', function(e) {
